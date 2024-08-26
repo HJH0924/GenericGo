@@ -92,7 +92,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/HJH0924/GenericGo/internal/slice"
+	"github.com/HJH0924/GenericGo/slice"
 )
 
 func ExampleSliceAdd() {
