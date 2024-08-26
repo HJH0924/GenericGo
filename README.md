@@ -28,13 +28,15 @@
         - [x]  对称差集
 - [ ]  **List**
     - [x]  ArrayList
-    - [x]  LinkedList
-    - [x]  ConcurrentList
+    - [x]  LinkedList 双向链表
+    - [x]  ConcurrentList 并发安全的 List
     - [ ]  SkipList
 - [ ]  **队列**
     - [ ]  基于 ArrayList
     - [ ]  基于 LinkedList
     - [x]  优先级队列 (基于大根堆)
+    - [x]  优先级队列 (基于大根堆) (并发安全)
+    - [ ]  延时队列
 - [ ]  **栈**
 - [ ]  **堆**
 - [ ]  **Map**
