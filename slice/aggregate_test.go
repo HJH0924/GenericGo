@@ -12,6 +12,7 @@ package slice
 import (
 	"testing"
 
+	genericgo "github.com/HJH0924/GenericGo"
 	"github.com/HJH0924/GenericGo/errs"
 	"github.com/stretchr/testify/assert"
 )
@@ -66,7 +67,7 @@ func TestMax(t *testing.T) {
 	testMaxTypes[float64](t)
 }
 
-func testMaxTypes[T internal.RealNumber](t *testing.T) {
+func testMaxTypes[T genericgo.RealNumber](t *testing.T) {
 	res, _ := Max[T]([]T{1, 2, 3})
 	assert.Equal(t, T(3), res)
 }
@@ -121,7 +122,7 @@ func TestMin(t *testing.T) {
 	testMinTypes[float64](t)
 }
 
-func testMinTypes[T internal.RealNumber](t *testing.T) {
+func testMinTypes[T genericgo.RealNumber](t *testing.T) {
 	res, _ := Min[T]([]T{1, 2, 3})
 	assert.Equal(t, T(1), res)
 }
