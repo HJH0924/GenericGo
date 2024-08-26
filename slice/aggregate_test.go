@@ -177,7 +177,7 @@ func TestSum(t *testing.T) {
 	testSumTypes[float64](t)
 }
 
-func testSumTypes[T internal.RealNumber](t *testing.T) {
+func testSumTypes[T genericgo.RealNumber](t *testing.T) {
 	res, _ := Sum[T]([]T{1, 2, 3})
 	assert.Equal(t, T(6), res)
 }
