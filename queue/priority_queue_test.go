@@ -66,6 +66,26 @@ func TestNewPriorityQueue(t *testing.T) {
 	}
 }
 
+func TestPriorityQueue_Len(t *testing.T) {
+
+}
+
+func TestPriorityQueue_Cap(t *testing.T) {
+
+}
+
+func TestPriorityQueue_IsBoundLess(t *testing.T) {
+
+}
+
+func TestPriorityQueue_IsFull(t *testing.T) {
+
+}
+
+func TestPriorityQueue_IsEmpty(t *testing.T) {
+
+}
+
 func TestPriorityQueue_Peek(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -195,6 +215,14 @@ func TestPriorityQueue_EnQueue2(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, test.expected, pq.AsSlice())
 	}
+}
+
+func TestPriorityQueue_DeQueue(t *testing.T) {
+
+}
+
+func TestPriorityQueue_AsSlice(t *testing.T) {
+
 }
 
 func getIntComparator() genericgo.Comparator[int] {
