@@ -53,7 +53,7 @@ func (pq *PriorityQueue[T]) IsEmpty() bool {
 // Peek 返回队列顶部的元素，但不移除它。如果队列为空，返回错误。
 func (pq *PriorityQueue[T]) Peek() (T, error) {
 	if pq.IsEmpty() {
-		return internal.Zero[T](), errs.NewErrEmptyQueue()
+		return genericgo.Zero[T](), errs.NewErrEmptyQueue()
 	}
 	return pq.vals[1], nil
 }
@@ -91,7 +91,7 @@ func (pq *PriorityQueue[T]) upHeapify() {
 // 如果队列为空，返回错误。
 func (pq *PriorityQueue[T]) DeQueue() (T, error) {
 	if pq.IsEmpty() {
-		return internal.Zero[T](), errs.NewErrEmptyQueue()
+		return genericgo.Zero[T](), errs.NewErrEmptyQueue()
 	}
 
 	val := pq.vals[1]              // 获取出队元素
@@ -147,7 +147,7 @@ func (pq *PriorityQueue[T]) AsSlice() []T {
 // NewPriorityQueue 创建一个新的优先级队列。
 // 接受容量参数和比较函数，用于确定元素的优先级顺序。
 // 当 capacity <= 0 时，视为无界队列，初始大小使用默认值64。
-func NewPriorityQueue[T any](capacity int, compare internal.Comparator[T]) *PriorityQueue[T] {
+func NewPriorityQueue[T any](capacity int, compare genericgo.Comparator[T]) *PriorityQueue[T] {
 	const (
 		DefaultInitialCap = 64
 	)
@@ -166,7 +166,7 @@ func NewPriorityQueue[T any](capacity int, compare internal.Comparator[T]) *Prio
 // NewPriorityQueueOf 创建一个具有初始值的优先级队列。
 // 它接受一个容量、一个包含初始元素的切片，以及一个比较函数。
 // 如果添加元素时出现错误，将返回nil。
-func NewPriorityQueueOf[T any](capacity int, vals []T, compare internal.Comparator[T]) *PriorityQueue[T] {
+func NewPriorityQueueOf[T any](capacity int, vals []T, compare genericgo.Comparator[T]) *PriorityQueue[T] {
 	pq := NewPriorityQueue[T](capacity, compare)
 	for _, val := range vals {
 		err := pq.EnQueue(val)
