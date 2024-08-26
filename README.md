@@ -1,8 +1,8 @@
-# Generic-Go
+# GenericGo
 
-在 Go 语言早期版本中，由于缺乏泛型，开发者在处理集合类型如切片、列表、队列等时，往往需要编写大量类型特定的代码。这不仅增加了开发工作量，也使得代码难以维护。Go 1.18 的泛型特性解决了这一问题，`Generic-Go` 正是基于这一特性，旨在为 Go 开发者提供一个现代、高效的工具库。
+在 Go 语言早期版本中，由于缺乏泛型，开发者在处理集合类型如切片、列表、队列等时，往往需要编写大量类型特定的代码。这不仅增加了开发工作量，也使得代码难以维护。Go 1.18 的泛型特性解决了这一问题，`GenericGo` 正是基于这一特性，旨在为 Go 开发者提供一个现代、高效的工具库。
 
-`Generic-Go` 是一个为 Go 语言设计的泛型工具库，它充分利用了 Go 1.18 版本引入的泛型特性，为开发者提供了一套类型安全、灵活且易于使用的编程接口。泛型是编程语言中一种强大的工具，它允许编写更通用、更灵活的代码，减少样板代码，并提高代码的复用性。
+`GenericGo` 是一个为 Go 语言设计的泛型工具库，它充分利用了 Go 1.18 版本引入的泛型特性，为开发者提供了一套类型安全、灵活且易于使用的编程接口。泛型是编程语言中一种强大的工具，它允许编写更通用、更灵活的代码，减少样板代码，并提高代码的复用性。
 
 
 
@@ -52,17 +52,17 @@
     - [ ]  并发队列
     - [ ]  并发阻塞队列
     - [ ]  并发阻塞优先级队列
-- [ ]  **利用 `Generic-Go` 实现本地缓存**
+- [ ]  **利用 `GenericGo` 实现本地缓存**
     - [ ]  适配 Redis
 
 
 
 ## 安装
 
-`Generic-Go` 作为库使用，可以通过 Go Modules 直接引入到您的项目中。使用以下命令：
+`GenericGo` 作为库使用，可以通过 Go Modules 直接引入到您的项目中。使用以下命令：
 
 ```bash
-go get github.com/HJH0924/Generic-Go
+go get github.com/HJH0924/GenericGo
 ```
 
 
@@ -72,7 +72,7 @@ go get github.com/HJH0924/Generic-Go
 拉取代码
 
 ```shell
-git clone https://github.com/HJH0924/Generic-Go.git
+git clone https://github.com/HJH0924/GenericGo.git
 ```
 
 配置环境
@@ -85,19 +85,19 @@ make setup
 
 ## 使用方法
 
-以下是如何使用 `Generic-Go` 中的切片添加元素的功能示例，更多示例代码可查看 `examples` ：
+以下是如何使用 `GenericGo` 中的切片添加元素的功能示例，更多示例代码可查看 `examples` ：
 
 ```go
 package main
 
 import (
 	"fmt"
-	"github.com/HJH0924/Generic-Go/internal/slice"
+	"github.com/HJH0924/GenericGo/internal/slice"
 )
 
 func ExampleSliceAdd() {
 	src := []int{3, 5, 7}
-    // 使用 Generic-Go 的 Add 函数向切片添加元素
+    // 使用 GenericGo 的 Add 函数向切片添加元素
 	src, err := slice.Add[int](src, 0, 1)
 	if err != nil {
 		fmt.Println(err)
