@@ -10,8 +10,9 @@
 package queue
 
 import (
-	genericgo "github.com/HJH0924/GenericGo"
 	"sync"
+
+	genericgo "github.com/HJH0924/GenericGo"
 )
 
 // ConcurrentPriorityQueue 并发安全的优先级队列
@@ -32,6 +33,16 @@ func (Self *ConcurrentPriorityQueue[T]) Cap() int {
 	Self.rwLock.RLock()
 	defer Self.rwLock.RUnlock()
 	return Self.pq.Cap()
+}
+
+// IsBoundLess 返回队列是否无界，即容量是否小于或等于0。
+func (Self *ConcurrentPriorityQueue[T]) IsBoundLess() bool {
+	return Self.pq.Cap() <= 0
+}
+
+// IsFull 返回队列是否已满。
+func (Self *ConcurrentPriorityQueue[T]) IsFull() bool {
+	return Self.pq.Cap() > 0 && Self.pq.Len() == Self.pq.Cap()
 }
 
 // IsEmpty 返回 ConcurrentPriorityQueue 是否为空。
