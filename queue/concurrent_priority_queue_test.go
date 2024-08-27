@@ -10,11 +10,12 @@
 package queue
 
 import (
-	"github.com/HJH0924/GenericGo/errs"
-	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"sync"
 	"testing"
+
+	"github.com/HJH0924/GenericGo/errs"
+	"github.com/stretchr/testify/assert"
 )
 
 // 多个 goroutine 执行入队操作，完成后，主协程把元素逐一出队，只要有序，可以认为并发入队没有问题
