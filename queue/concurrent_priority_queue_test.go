@@ -10,188 +10,164 @@
 package queue
 
 import (
-	"testing"
-
 	"github.com/HJH0924/GenericGo/errs"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"math/rand"
+	"sync"
+	"testing"
 )
 
-func TestNewConcurrentPriorityQueue(t *testing.T) {
-	initialVals := []int{1, 2, 3, 4, 5, 6}
-	tests := []struct {
-		name     string
-		capacity int
-		vals     []int
-		expected []int
-	}{
-		{
-			name:     "Test with default capacity",
-			capacity: 0,
-			vals:     initialVals,
-			expected: []int{6, 5, 4, 3, 2, 1},
-		},
-		{
-			name:     "Test with specific capacity",
-			capacity: len(initialVals),
-			vals:     initialVals,
-			expected: []int{6, 5, 4, 3, 2, 1},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// 使用提供的容量创建新的优先级队列
-			pq := NewConcurrentPriorityQueue[int](tt.capacity, getIntComparator())
-			// 验证队列初始长度为0
-			assert.Equal(t, 0, pq.Len())
-			// 向队列添加元素
-			for _, val := range tt.vals {
-				err := pq.EnQueue(val)
-				assert.NoError(t, err)
-			}
-			// 验证队列容量和长度
-			assert.Equal(t, tt.capacity, pq.Cap())
-			assert.Equal(t, len(tt.vals), pq.Len())
-			// 验证队列中元素顺序是否正确
-			res := make([]int, 0, len(tt.vals))
-			for !pq.IsEmpty() {
-				val, err := pq.DeQueue()
-				assert.NoError(t, err)
-				res = append(res, val)
-			}
-			assert.Equal(t, tt.expected, res)
-		})
-	}
-}
-
-func TestConcurrentPriorityQueue_Peek(t *testing.T) {
-	tests := []struct {
-		name     string
-		capacity int
-		vals     []int
-		wantErr  error
-	}{
-		{
-			name:     "Test with vals",
-			capacity: 0,
-			vals:     []int{6, 5, 4, 3, 2, 1},
-			wantErr:  errs.NewErrEmptyQueue(),
-		},
-		{
-			name:     "Test empty queue",
-			capacity: 0,
-			vals:     []int{},
-			wantErr:  errs.NewErrEmptyQueue(),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			pq := NewConcurrentPriorityQueueOf(tt.capacity, tt.vals, getIntComparator())
-			for !pq.IsEmpty() {
-				peek, err := pq.Peek()
-				assert.NoError(t, err)
-				pop, err := pq.DeQueue()
-				assert.NoError(t, err)
-				assert.Equal(t, pop, peek)
-			}
-			_, err := pq.Peek()
-			assert.Equal(t, tt.wantErr, err)
-		})
-	}
-}
-
+// 多个 goroutine 执行入队操作，完成后，主协程把元素逐一出队，只要有序，可以认为并发入队没有问题
 func TestConcurrentPriorityQueue_EnQueue(t *testing.T) {
 	tests := []struct {
-		name     string
-		capacity int
-		vals     []int
-		enVal    int
-		wantErr  error
+		name          string
+		capacity      int
+		numElements   int // 要入队的元素数量
+		numGoroutines int // 用于并发的 goroutine 数量
+		wantErrCount  int
 	}{
 		{
-			name:     "Bounded empty queue",
-			capacity: 10,
-			vals:     []int{},
-			enVal:    10,
+			name:          "Test with vals less than capacity",
+			capacity:      10010,
+			numElements:   10000,
+			numGoroutines: 100,
 		},
 		{
-			name:     "Bounded full queue",
-			capacity: 10,
-			vals:     []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-			enVal:    11,
-			wantErr:  errs.NewErrOutOfCapacity(),
-		},
-		{
-			name:     "Bounded queue with available space",
-			capacity: 10,
-			vals:     []int{1, 2, 3, 4, 5, 6},
-			enVal:    10,
-		},
-		{
-			name:     "Boundless empty queue",
-			capacity: 0,
-			vals:     []int{},
-			enVal:    10,
-		},
-		{
-			name:     "Boundless queue with available space",
-			capacity: 0,
-			vals:     []int{1, 2, 3, 4, 5, 6},
-			enVal:    10,
+			name:          "Test with vals more than capacity",
+			capacity:      10010,
+			numElements:   10100,
+			numGoroutines: 100,
+			wantErrCount:  90,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			pq := NewConcurrentPriorityQueueOf(tt.capacity, tt.vals, getIntComparator())
-			require.NotNil(t, pq)
-			err := pq.EnQueue(tt.enVal)
-			assert.Equal(t, tt.wantErr, err)
-			assert.Equal(t, tt.capacity, pq.Cap())
+			elementsPerGoroutine := tt.numElements / tt.numGoroutines // 每个 goroutine 要处理的元素数量
+
+			// 准备测试数据
+			testData := make([]int, tt.numElements)
+			for i := range testData {
+				testData[i] = rand.Int() % 100 // 0-99
+			}
+
+			pq := NewConcurrentPriorityQueue(tt.capacity, getIntComparator())
+
+			errChan := make(chan error, tt.numGoroutines)
+
+			var wg sync.WaitGroup
+			for i := 0; i < tt.numGoroutines; i++ {
+				start := i * elementsPerGoroutine       // 0 100 200 ...
+				end := start + elementsPerGoroutine - 1 // 99 199 299 ...
+
+				wg.Add(1)
+				go func(start, end int) {
+					defer wg.Done()
+					for j := start; j <= end; j++ {
+						err := pq.EnQueue(testData[j])
+						if err != nil {
+							errChan <- err
+						}
+					}
+				}(start, end)
+			}
+
+			wg.Wait() // 等待所有 goroutine 完成
+
+			close(errChan)
+
+			// 验证错误数量是否符合预期
+			assert.Equal(t, tt.wantErrCount, len(errChan))
+
+			// 验证元素是否按预期顺序出队
+			prev := 100
+			for !pq.IsEmpty() {
+				getDeVal, _ := pq.DeQueue()
+				assert.GreaterOrEqual(t, prev, getDeVal)
+				prev = getDeVal
+			}
 		})
 	}
 }
 
-func TestConcurrentPriorityQueue_EnQueue2(t *testing.T) {
+// 预先入队一组数据，通过测试多个协程并发出队时，每个协程内出队元素有序，间接确认并发安全
+func TestConcurrentPriorityQueue_DeQueue(t *testing.T) {
 	tests := []struct {
-		name     string
-		vals     []int
-		enVal    int
-		expected []int
+		name                 string
+		numElements          int // 要出队的元素数量
+		numGoroutines        int // 用于并发的 goroutine 数量
+		elementsPerGoroutine int // 每个 goroutine 要处理的元素数量
+		remain               int // 队列中剩余的元素数量
+		wantErrCount         int
 	}{
 		{
-			name:     "New val is the largest",
-			vals:     []int{10, 8, 7, 6, 2},
-			enVal:    20,
-			expected: []int{20, 8, 10, 6, 2, 7},
+			name:                 "More Elements Enqueued Than Dequeued",
+			numElements:          10000,
+			numGoroutines:        99,
+			elementsPerGoroutine: 100,
+			remain:               10000 - 99*100,
+			wantErrCount:         0,
 		},
 		{
-			name:     "New element is the smallest",
-			vals:     []int{10, 8, 7, 6, 2},
-			enVal:    1,
-			expected: []int{10, 8, 7, 6, 2, 1},
-		},
-		{
-			name:     "New element fits in between",
-			vals:     []int{10, 6, 7, 5, 2},
-			enVal:    8,
-			expected: []int{10, 6, 8, 5, 2, 7},
-		},
-		{
-			name:     "New element is a duplicate",
-			vals:     []int{10, 6, 7, 5, 2},
-			enVal:    10,
-			expected: []int{10, 6, 10, 5, 2, 7},
+			name:                 "Fewer Elements Enqueued Than Dequeued",
+			numElements:          10000,
+			numGoroutines:        101,
+			elementsPerGoroutine: 100,
+			remain:               0,
+			wantErrCount:         100,
 		},
 	}
 
 	for _, tt := range tests {
-		pq := NewConcurrentPriorityQueueOf(0, tt.vals, getIntComparator())
-		require.NotNil(t, pq)
-		err := pq.EnQueue(tt.enVal)
-		assert.NoError(t, err)
-		assert.Equal(t, tt.expected, pq.AsSlice())
+		t.Run(tt.name, func(t *testing.T) {
+			// 准备测试数据
+			testData := make([]int, tt.numElements)
+			for i := range testData {
+				testData[i] = rand.Int() % 1000 // 0-999
+			}
+
+			// 预先入队一组数据
+			pq := NewConcurrentPriorityQueueOf(tt.numElements, testData, getIntComparator())
+
+			errChan := make(chan error, tt.numGoroutines*tt.elementsPerGoroutine)
+			disOrderChan := make(chan bool, tt.numGoroutines*tt.elementsPerGoroutine)
+
+			var wg sync.WaitGroup
+			for i := 0; i < tt.numGoroutines; i++ {
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					prev := 1000
+					for i := 0; i < tt.elementsPerGoroutine; i++ {
+						deVal, err := pq.DeQueue()
+						if err != nil {
+							errChan <- err
+						} else {
+							if prev < deVal {
+								disOrderChan <- true
+							}
+							prev = deVal
+						}
+					}
+				}()
+			}
+
+			wg.Wait() // 等待所有 goroutine 完成
+
+			close(errChan)
+			close(disOrderChan)
+
+			// 验证错误数量是否符合预期
+			assert.Equal(t, tt.wantErrCount, len(errChan))
+			for err := range errChan {
+				assert.Equal(t, err, errs.NewErrEmptyQueue())
+			}
+
+			// 验证是否所有元素都按预期顺序出队
+			assert.Equal(t, 0, len(disOrderChan))
+
+			// 验证队列中剩余的元素数量是否符合预期
+			assert.Equal(t, tt.remain, pq.Len())
+		})
 	}
 }
