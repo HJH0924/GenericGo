@@ -67,23 +67,175 @@ func TestNewPriorityQueue(t *testing.T) {
 }
 
 func TestPriorityQueue_Len(t *testing.T) {
+	tests := []struct {
+		name    string
+		vals    []int
+		wantLen int
+	}{
+		{
+			name:    "Test with vals",
+			vals:    []int{1, 2, 3, 4, 5},
+			wantLen: len([]int{1, 2, 3, 4, 5}),
+		},
+		{
+			name:    "Test empty queue",
+			vals:    []int{},
+			wantLen: 0,
+		},
+	}
 
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pq := NewPriorityQueueOf(0, test.vals, getIntComparator())
+			assert.Equal(t, test.wantLen, pq.Len())
+		})
+	}
 }
 
 func TestPriorityQueue_Cap(t *testing.T) {
+	tests := []struct {
+		name     string
+		capacity int
+		vals     []int
+		wantCap  int
+	}{
+		{
+			name:     "Test bounded queue",
+			capacity: 5,
+			vals:     []int{1, 2, 3},
+			wantCap:  5,
+		},
+		{
+			name:     "Test unbounded queue",
+			capacity: 0, // 无界队列
+			vals:     []int{1, 2, 3},
+			wantCap:  0,
+		},
+	}
 
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pq := NewPriorityQueueOf(test.capacity, test.vals, getIntComparator())
+			assert.Equal(t, test.wantCap, pq.Cap())
+		})
+	}
 }
 
 func TestPriorityQueue_IsBoundLess(t *testing.T) {
+	tests := []struct {
+		name            string
+		capacity        int
+		vals            []int
+		wantIsBoundLess bool
+	}{
+		{
+			name:            "Test bounded queue",
+			capacity:        5,
+			vals:            []int{1, 2, 3},
+			wantIsBoundLess: false,
+		},
+		{
+			name:            "Test unbounded queue with zero capacity",
+			capacity:        0, // 无界队列
+			vals:            []int{1, 2, 3},
+			wantIsBoundLess: true,
+		},
+		{
+			name:            "Test unbounded queue with negative capacity",
+			capacity:        -1, // 无界队列
+			vals:            []int{1, 2, 3},
+			wantIsBoundLess: true,
+		},
+	}
 
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pq := NewPriorityQueueOf(test.capacity, test.vals, getIntComparator())
+			assert.Equal(t, test.wantIsBoundLess, pq.IsBoundLess())
+		})
+	}
 }
 
 func TestPriorityQueue_IsFull(t *testing.T) {
+	tests := []struct {
+		name       string
+		capacity   int
+		vals       []int
+		wantIsFull bool
+	}{
+		{
+			name:       "Test bounded not full queue",
+			capacity:   5,
+			vals:       []int{1, 2, 3},
+			wantIsFull: false,
+		},
+		{
+			name:       "Test bounded full queue",
+			capacity:   5,
+			vals:       []int{1, 2, 3, 4, 5},
+			wantIsFull: true,
+		},
+		{
+			name:       "Test unbounded queue with zero capacity",
+			capacity:   0,
+			vals:       []int{1, 2, 3},
+			wantIsFull: false,
+		},
+		{
+			name:       "Test unbounded queue with negative capacity",
+			capacity:   -1,
+			vals:       []int{1, 2, 3},
+			wantIsFull: false,
+		},
+	}
 
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pq := NewPriorityQueueOf(test.capacity, test.vals, getIntComparator())
+			assert.Equal(t, test.wantIsFull, pq.IsFull())
+		})
+	}
 }
 
 func TestPriorityQueue_IsEmpty(t *testing.T) {
+	tests := []struct {
+		name        string
+		capacity    int
+		vals        []int
+		wantIsEmpty bool
+	}{
+		{
+			name:        "Test bounded not empty queue",
+			capacity:    5,
+			vals:        []int{1, 2, 3},
+			wantIsEmpty: false,
+		},
+		{
+			name:        "Test bounded empty queue",
+			capacity:    5,
+			vals:        []int{},
+			wantIsEmpty: true,
+		},
+		{
+			name:        "Test unbounded not empty queue",
+			capacity:    0,
+			vals:        []int{1, 2, 3},
+			wantIsEmpty: false,
+		},
+		{
+			name:        "Test unbounded empty queue",
+			capacity:    -1,
+			vals:        []int{},
+			wantIsEmpty: true,
+		},
+	}
 
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pq := NewPriorityQueueOf(test.capacity, test.vals, getIntComparator())
+			assert.Equal(t, test.wantIsEmpty, pq.IsEmpty())
+		})
+	}
 }
 
 func TestPriorityQueue_Peek(t *testing.T) {
@@ -218,11 +370,65 @@ func TestPriorityQueue_EnQueue2(t *testing.T) {
 }
 
 func TestPriorityQueue_DeQueue(t *testing.T) {
+	tests := []struct {
+		name      string
+		capacity  int
+		vals      []int
+		wantDeVal int
+		wantErr   error
+	}{
+		{
+			name:      "not empty queue",
+			capacity:  -1,
+			vals:      []int{41, 62, 67, 87, 41, 78, 45, 28, 25, 58},
+			wantDeVal: 87,
+		},
+		{
+			name:      "empty queue",
+			capacity:  -1,
+			vals:      []int{},
+			wantDeVal: 0,
+			wantErr:   errs.NewErrEmptyQueue(),
+		},
+	}
 
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pq := NewPriorityQueueOf(test.capacity, test.vals, getIntComparator())
+			getDeVal, getErr := pq.DeQueue()
+			if getErr != nil {
+				assert.Equal(t, test.wantErr, getErr)
+			} else {
+				assert.Equal(t, test.wantDeVal, getDeVal)
+			}
+		})
+	}
 }
 
 func TestPriorityQueue_AsSlice(t *testing.T) {
+	tests := []struct {
+		name     string
+		vals     []int
+		wantVals []int
+	}{
+		{
+			name:     "",
+			vals:     []int{41, 62, 67, 87, 41, 78, 45, 28, 25, 58},
+			wantVals: []int{87, 67, 78, 41, 58, 62, 45, 28, 25, 41},
+		},
+		{
+			name:     "",
+			vals:     []int{},
+			wantVals: []int{},
+		},
+	}
 
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pq := NewPriorityQueueOf(-1, test.vals, getIntComparator())
+			assert.Equal(t, test.wantVals, pq.AsSlice())
+		})
+	}
 }
 
 func getIntComparator() genericgo.Comparator[int] {
