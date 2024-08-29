@@ -46,7 +46,7 @@
     - [ ]  红黑树
     - [ ]  基于红黑树的 TreeMap 和 TreeSet
 - [ ]  **Set**
-    - [ ]  HashSet
+    - [x]  HashSet
     - [ ]  TreeSet
 - [ ]  **跳表**
     - [ ]  基于跳表的有序 SortedSet

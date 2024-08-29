@@ -10,9 +10,10 @@
 package set
 
 import (
+	"testing"
+
 	"github.com/HJH0924/GenericGo/slice"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestHashSet_AddKeys(t *testing.T) {
