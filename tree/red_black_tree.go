@@ -32,10 +32,3 @@ func (Self *RBTree[K, V]) Size() int {
 	}
 	return Self.size
 }
-
-func (Self *RBTree[K, V]) Size() int {
-	if Self.root == nil {
-		return 0
-	}
-	return Self.size
-}
