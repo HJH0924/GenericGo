@@ -31,3 +31,11 @@ func NewErrEmptyQueue() error {
 func NewErrOutOfCapacity() error {
 	return WrapError("超出容量限制，无法添加更多元素")
 }
+
+func NewErrRBTreeDuplicateNode() error {
+	return WrapError("RBTree不能添加重复节点键值")
+}
+
+func NewErrRBTreeNodeNotFound() error {
+	return WrapError("RBTree中不存在该节点键值")
+}
