@@ -1,3 +1,4 @@
+[![PkgGoDev](https://pkg.go.dev/github.com/HJH0924/GenericGo)](https://pkg.go.dev/github.com/HJH0924/GenericGo)
 # GenericGo
 
 在 Go 语言早期版本中，由于缺乏泛型，开发者在处理集合类型如切片、列表、队列等时，往往需要编写大量类型特定的代码。这不仅增加了开发工作量，也使得代码难以维护。Go 1.18 的泛型特性解决了这一问题，`GenericGo` 正是基于这一特性，旨在为 Go 开发者提供一个现代、高效的工具库。
