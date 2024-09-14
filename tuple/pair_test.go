@@ -184,8 +184,6 @@ func TestNewPairs(t *testing.T) {
 
 					assert.Equal(t, reflect.TypeOf(tt.keys[i]), reflect.TypeOf(pairs[i].Key))
 					assert.Equal(t, reflect.TypeOf(tt.vals[i]), reflect.TypeOf(pairs[i].Val))
-
-					fmt.Println(pairs[i].ToString())
 				}
 			}
 		})
