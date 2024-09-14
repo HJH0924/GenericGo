@@ -11,9 +11,10 @@ package tuple
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewPair(t *testing.T) {
@@ -74,7 +75,6 @@ func TestPair_ToString(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			pair := NewPair(tt.key, tt.val)
 			pairStr := pair.ToString()
-			fmt.Println(pairStr)
 			assert.Equal(t, fmt.Sprintf("<%#v, %#v>", tt.key, tt.val), pairStr)
 		})
 	}

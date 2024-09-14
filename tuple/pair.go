@@ -11,6 +11,7 @@ package tuple
 
 import (
 	"fmt"
+
 	"github.com/HJH0924/GenericGo/errs"
 )
 
