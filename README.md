@@ -29,6 +29,7 @@
       - [x] 对称差集
 - [x] **Option 模式**
    - [x] 提供泛型 Option 模式支持
+- [x] **Pair**
 - [ ] **List**
    - [x] ArrayList
    - [x] LinkedList 双向链表
