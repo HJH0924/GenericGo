@@ -17,25 +17,25 @@ func WrapError(message string) error {
 }
 
 func NewErrIndexOutOfRange(length int, index int) error {
-	return WrapError(fmt.Sprintf("索引越界错误：索引 %d 超出了范围，长度为 %d", index, length))
+	return WrapError(fmt.Sprintf("Index %d is out of bounds, length is %d", index, length))
 }
 
 func NewErrEmptySlice() error {
-	return WrapError("提供的切片为空，请确保传递非空切片以进行操作")
+	return WrapError("The provided slice is empty, please ensure a non-empty slice is passed for operation")
 }
 
 func NewErrEmptyQueue() error {
-	return WrapError("队列为空，无法执行操作")
+	return WrapError("The queue is empty, unable to perform operation")
 }
 
 func NewErrOutOfCapacity() error {
-	return WrapError("超出容量限制，无法添加更多元素")
+	return WrapError("Capacity exceeded, unable to add more elements")
 }
 
 func NewErrRBTreeDuplicateNode() error {
-	return WrapError("RBTree不能添加重复节点键值")
+	return WrapError("RBTree cannot add duplicate node key value")
 }
 
 func NewErrRBTreeNodeNotFound() error {
-	return WrapError("RBTree中不存在该节点键值")
+	return WrapError("The node key value does not exist in the RBTree")
 }
