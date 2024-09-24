@@ -30,6 +30,10 @@
 - [x] **Option 模式**
    - [x] 提供泛型 Option 模式支持
 - [x] **Pair**
+- [x] **随机字符串生成**
+- [ ] **TaskPool**
+   - [ ] 按需创建 Goroutine 的并发阻塞的任务池
+
 - [ ] **List**
    - [x] ArrayList
    - [x] LinkedList 双向链表
@@ -60,6 +64,7 @@
    - [ ] 并发阻塞优先级队列
 - [ ] **利用 `GenericGo` 实现本地缓存**
    - [ ] 适配 Redis
+
 
 
 
