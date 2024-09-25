@@ -10,9 +10,8 @@
 package tuple
 
 import (
+	"errors"
 	"fmt"
-
-	"github.com/HJH0924/GenericGo/errs"
 )
 
 // Pair 键值对
@@ -43,7 +42,7 @@ func NewPair[K any, V any](key K, val V) Pair[K, V] {
 // 如果 keys 或 values 为 nil，或者它们的长度不相等，将返回错误。
 func NewPairs[K any, V any](keys []K, vals []V) ([]Pair[K, V], error) {
 	if keys == nil || vals == nil {
-		return nil, NewErrNilKeysVals()
+		return nil, NewErrNilKeysVals
 	}
 	keysLen := len(keys)
 	valsLen := len(vals)
@@ -93,7 +92,7 @@ func PackPairs[K any, V any](flatPairs []any) ([]Pair[K, V], error) {
 	}
 	n := len(flatPairs)
 	if n%2 != 0 {
-		return nil, NewErrInvalidFlatPairsLength()
+		return nil, NewErrInvalidFlatPairsLength
 	}
 	pairs := make([]Pair[K, V], n/2)
 	for i := 0; i < n; i += 2 {
@@ -110,27 +109,17 @@ func PackPairs[K any, V any](flatPairs []any) ([]Pair[K, V], error) {
 	return pairs, nil
 }
 
-// NewErrNilKeysVals 创建一个 keys 和 vals 不能为 nil 的错误。
-func NewErrNilKeysVals() error {
-	return errs.WrapError("keys and vals must not be nil")
-}
+var (
+	NewErrNilKeysVals            = errors.New("keys and vals must not be nil")
+	NewErrInvalidFlatPairsLength = errors.New("flatPairs length must be even")
+)
 
-// NewErrUnequalLengthsOfKeysVals 创建一个 keys 和 vals 长度必须相等的错误。
 func NewErrUnequalLengthsOfKeysVals(keysLen int, valsLen int) error {
-	return errs.WrapError(fmt.Sprintf("length of keys and vals must be equal, len(keys)=%d, len(vals)=%d", keysLen, valsLen))
+	return fmt.Errorf("length of keys and vals must be equal, len(keys)=%d, len(vals)=%d", keysLen, valsLen)
 }
-
-// NewErrInvalidFlatPairsLength 创建一个 flatPairs 长度必须为偶数的错误。
-func NewErrInvalidFlatPairsLength() error {
-	return errs.WrapError("flatPairs length must be even")
-}
-
-// NewErrTypeAssertionForKey 创建一个 key 类型断言失败的错误。
 func NewErrTypeAssertionForKey(index int) error {
-	return errs.WrapError(fmt.Sprintf("type assertion failed for key at index %d", index))
+	return fmt.Errorf("type assertion failed for key at index %d", index)
 }
-
-// NewErrTypeAssertionForVal 创建一个 val 类型断言失败的错误。
 func NewErrTypeAssertionForVal(index int) error {
-	return errs.WrapError(fmt.Sprintf("type assertion failed for val at index %d", index))
+	return fmt.Errorf("type assertion failed for val at index %d", index)
 }

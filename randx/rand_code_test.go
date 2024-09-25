@@ -93,21 +93,21 @@ func TestRandStrByType(t *testing.T) {
 			length:    100,
 			typ:       TypeAllMixed + 1,
 			wantMatch: "",
-			wantErr:   NewErrTypeNotSupported(),
+			wantErr:   NewErrTypeNotSupported,
 		},
 		{
 			name:      "未定义类型(0)",
 			length:    100,
 			typ:       0,
 			wantMatch: "",
-			wantErr:   NewErrTypeNotSupported(),
+			wantErr:   NewErrTypeNotSupported,
 		},
 		{
 			name:      "长度小于0",
 			length:    -1,
 			typ:       0,
 			wantMatch: "",
-			wantErr:   NewErrLengthLessThanZero(),
+			wantErr:   NewErrLengthLessThanZero,
 		},
 		{
 			name:      "长度等于0",
@@ -146,7 +146,7 @@ func TestRandStrByCharset(t *testing.T) {
 			name:    "长度小于0",
 			length:  -1,
 			charset: CharsetDigit,
-			wantErr: NewErrLengthLessThanZero(),
+			wantErr: NewErrLengthLessThanZero,
 		},
 		{
 			name:    "长度等于0",
@@ -158,7 +158,7 @@ func TestRandStrByCharset(t *testing.T) {
 			name:    "字符集为空",
 			length:  100,
 			charset: "",
-			wantErr: NewErrEmptyCharset(),
+			wantErr: NewErrEmptyCharset,
 		},
 		{
 			name:    "数字验证码",

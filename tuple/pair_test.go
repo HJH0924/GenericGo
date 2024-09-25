@@ -131,19 +131,19 @@ func TestNewPairs(t *testing.T) {
 			name:    "NilKeys",
 			keys:    nil,
 			vals:    []any{18, 20},
-			wantErr: NewErrNilKeysVals(),
+			wantErr: NewErrNilKeysVals,
 		},
 		{
 			name:    "NilVals",
 			keys:    []any{"Tom", "Jerry"},
 			vals:    nil,
-			wantErr: NewErrNilKeysVals(),
+			wantErr: NewErrNilKeysVals,
 		},
 		{
 			name:    "NilKeysAndVals",
 			keys:    nil,
 			vals:    nil,
-			wantErr: NewErrNilKeysVals(),
+			wantErr: NewErrNilKeysVals,
 		},
 		{
 			name: "EmptyKeysAndVals",
@@ -368,7 +368,7 @@ func TestPackPairs_UserString(t *testing.T) {
 }
 
 func TestPackPairs_Empty(t *testing.T) {
-	flatPairs := []any{}
+	var flatPairs []any
 	pairs, err := PackPairs[string, int](flatPairs)
 	assert.NoError(t, err)
 	assert.Empty(t, pairs)
@@ -412,7 +412,7 @@ func TestPackPairs_InvalidLength(t *testing.T) {
 	flatPairs := []any{1, "one", 2.5, "two", "three"}
 	_, err := PackPairs[int, string](flatPairs)
 	assert.Error(t, err)
-	assert.Equal(t, NewErrInvalidFlatPairsLength(), err)
+	assert.Equal(t, NewErrInvalidFlatPairsLength, err)
 }
 
 type user struct {

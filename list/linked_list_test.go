@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"testing"
 
+	"errors"
 	"github.com/HJH0924/GenericGo/errs"
 	"github.com/stretchr/testify/assert"
 )
@@ -426,7 +427,7 @@ func TestLinkedList_Range(t *testing.T) {
 		{
 			name:    "Test interruption",
 			slice:   []int{1, 2, 3, 4, -5, 6, 7, -8, 9, 10},
-			wantErr: errs.WrapError("index 4 is error"),
+			wantErr: errors.New("index 4 is error"),
 		},
 		{
 			name:    "Test array is nil",
@@ -443,7 +444,7 @@ func TestLinkedList_Range(t *testing.T) {
 			err := al.Range(func(idx int, val int) error {
 				called = true
 				if val < 0 {
-					return errs.WrapError(fmt.Sprintf("index %d is error", idx))
+					return fmt.Errorf("index %d is error", idx)
 				}
 				sum += val
 				return nil

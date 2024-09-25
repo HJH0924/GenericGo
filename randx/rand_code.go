@@ -10,9 +10,9 @@
 package randx
 
 import (
+	"errors"
 	"math/rand"
 
-	"github.com/HJH0924/GenericGo/errs"
 	"github.com/HJH0924/GenericGo/tuple"
 )
 
@@ -48,13 +48,13 @@ var (
 // 请保证输入的 typ 的取值范围在 (0, TypeAllMixed] 内，否则会返回 NewErrTypeNotSupported
 func RandStrByType(length int, typ Type) (string, error) {
 	if length < 0 {
-		return "", NewErrLengthLessThanZero()
+		return "", NewErrLengthLessThanZero
 	}
 	if length == 0 {
 		return "", nil
 	}
 	if typ <= 0 || typ > TypeAllMixed {
-		return "", NewErrTypeNotSupported()
+		return "", NewErrTypeNotSupported
 	}
 
 	charset := ""
@@ -65,7 +65,7 @@ func RandStrByType(length int, typ Type) (string, error) {
 	}
 
 	if charset == "" {
-		return "", NewErrEmptyCharset()
+		return "", NewErrEmptyCharset
 	}
 
 	return randStr(length, charset), nil
@@ -77,13 +77,13 @@ func RandStrByType(length int, typ Type) (string, error) {
 // 字符集内部字符可以无序或重复。
 func RandStrByCharset(length int, charset string) (string, error) {
 	if length < 0 {
-		return "", NewErrLengthLessThanZero()
+		return "", NewErrLengthLessThanZero
 	}
 	if length == 0 {
 		return "", nil
 	}
 	if charset == "" {
-		return "", NewErrEmptyCharset()
+		return "", NewErrEmptyCharset
 	}
 
 	return randStr(length, charset), nil
@@ -118,17 +118,8 @@ func randStr(length int, charset string) string {
 	return string(res)
 }
 
-// NewErrTypeNotSupported 创建一个表示不支持的类型的新错误。
-func NewErrTypeNotSupported() error {
-	return errs.WrapError("Unsupported type")
-}
-
-// NewErrLengthLessThanZero 创建一个表示长度必须大于等于0的新错误。
-func NewErrLengthLessThanZero() error {
-	return errs.WrapError("length must be greater than or equal to zero")
-}
-
-// NewErrEmptyCharset 创建一个表示字符集不能为空的新错误。
-func NewErrEmptyCharset() error {
-	return errs.WrapError("charset cannot be empty")
-}
+var (
+	NewErrTypeNotSupported   = errors.New("unsupported type")
+	NewErrLengthLessThanZero = errors.New("length must be greater than or equal to zero")
+	NewErrEmptyCharset       = errors.New("charset cannot be empty")
+)
