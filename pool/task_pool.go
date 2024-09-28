@@ -13,12 +13,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"runtime"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/HJH0924/GenericGo/option"
 	"github.com/HJH0924/GenericGo/set"
+)
+
+var (
+	// _ 是一个特殊的变量名，用于忽略未使用的变量值。
+	_ TaskPool = &OnDemandBlockTaskPool{}
 )
 
 // OnDemandBlockTaskPool 按需创建 Goroutine 的并发阻塞的任务池
@@ -45,6 +51,31 @@ type OnDemandBlockTaskPool struct {
 	// 上下文管理，用于优雅地中断 Goroutine
 	interruptCtx       context.Context    // 用于中断 Goroutine 的上下文
 	interruptCtxCancel context.CancelFunc // 用于取消 interruptCtx 的函数
+}
+
+func (Self *OnDemandBlockTaskPool) Submit(ctx context.Context, task Task) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (Self *OnDemandBlockTaskPool) Start() error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (Self *OnDemandBlockTaskPool) Shutdown() (<-chan ShutdownSignal, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (Self *OnDemandBlockTaskPool) ShutdownNow() ([]Task, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (Self *OnDemandBlockTaskPool) States(ctx context.Context, interval time.Duration) (<-chan State, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 // NewOnDemandBlockTaskPool 创建一个新的 OnDemandBlockTaskPool
@@ -185,4 +216,24 @@ func (Self *timeoutGroup) size() int {
 	Self.rwLock.RLock()
 	defer Self.rwLock.RUnlock()
 	return Self.group.Size()
+}
+
+// taskWrapper Task 的装饰器
+type taskWrapper struct {
+	task Task
+}
+
+// run 执行包装的任务，并捕获 panic 异常。
+func (Self *taskWrapper) run(ctx context.Context) (err error) {
+	defer func() {
+		// 处理 panic
+		if r := recover(); r != nil {
+			buf := make([]byte, panicBuffLen)
+			buf = buf[:runtime.Stack(buf, false)]
+			err = fmt.Errorf("%w: %s", NewErrTaskRunningPanic, fmt.Sprintf("[PANIC]:\t%+v\n%s\n", r, buf))
+			// 这里可以将异常信息输出到日志，或者进行其他处理
+		}
+	}()
+
+	return Self.task.Run(ctx)
 }
