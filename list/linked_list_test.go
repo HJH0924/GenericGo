@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"errors"
+
 	"github.com/HJH0924/GenericGo/errs"
 	"github.com/stretchr/testify/assert"
 )
