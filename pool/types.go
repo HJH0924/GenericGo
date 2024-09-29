@@ -52,7 +52,7 @@ type Task interface {
 // State 定义了任务池的运行状态结构体
 type State struct {
 	PoolState      int32 // 任务池的状态码
-	GoCnt          int32 // 当前任务池中 Goroutine 的数量
+	CurrentGo      int32 // 当前任务池中 Goroutine 的数量
 	QueueSize      int32 // 任务队列的大小
 	WaitingTaskCnt int32 // 等待执行的任务数量
 	RunningTaskCnt int32 // 当前正在执行的任务数量

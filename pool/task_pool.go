@@ -23,7 +23,6 @@ import (
 )
 
 var (
-	// _ 是一个特殊的变量名，用于忽略未使用的变量值。
 	_ TaskPool = &OnDemandBlockTaskPool{}
 )
 
@@ -35,7 +34,7 @@ type OnDemandBlockTaskPool struct {
 	taskQueue chan Task // 任务队列，存放等待执行的任务
 
 	numGoRunningTasks int32 // 当前正在执行任务的 Goroutine 数量
-	totalGo           int32 // 当前任务池中的 Goroutine 总数
+	currentGo         int32 // 当前任务池中的 Goroutine 总数
 
 	initGo int32 // 初始 Goroutine 数量
 	coreGo int32 // 核心 Goroutine 数量，通常在低负载时保持
@@ -107,7 +106,7 @@ func (Self *OnDemandBlockTaskPool) trySubmit(ctx context.Context, task Task, sta
 			return false, ctx.Err()
 		case Self.taskQueue <- task:
 			if state == stateRunning && Self.allow2CreateNewGoRoutine() {
-				Self.increaseTotalGo(1)
+				Self.increaseCurrentGo(1)
 				id := int(atomic.AddInt32(&Self.id, 1))
 				go Self.goroutine(id)
 			}
@@ -128,20 +127,20 @@ func (Self *OnDemandBlockTaskPool) allow2CreateNewGoRoutine() bool {
 
 	backlogRate := float64(len(Self.taskQueue)) / float64(cap(Self.taskQueue))
 
-	return Self.totalGo < Self.maxGo && backlogRate != 0 && backlogRate >= Self.queueBacklogRate
+	return Self.currentGo < Self.maxGo && backlogRate != 0 && backlogRate >= Self.queueBacklogRate
 }
 
-// increaseTotalGo 原子地增加 totalGo 的值。
-func (Self *OnDemandBlockTaskPool) increaseTotalGo(n int32) {
+// increaseCurrentGo 原子地增加 currentGo 的值。
+func (Self *OnDemandBlockTaskPool) increaseCurrentGo(n int32) {
 	Self.rwLock.Lock()
-	Self.totalGo += n
+	Self.currentGo += n
 	Self.rwLock.Unlock()
 }
 
-// decreaseTotalGo 原子地减少 totalGo 的值。
-func (Self *OnDemandBlockTaskPool) decreaseTotalGo(n int32) {
+// decreaseCurrentGo 原子地减少 currentGo 的值。
+func (Self *OnDemandBlockTaskPool) decreaseCurrentGo(n int32) {
 	Self.rwLock.Lock()
-	Self.totalGo -= n
+	Self.currentGo -= n
 	Self.rwLock.Unlock()
 }
 
@@ -157,19 +156,19 @@ func (Self *OnDemandBlockTaskPool) goroutine(id int) {
 	for {
 		select {
 		case <-Self.interruptCtx.Done():
-			Self.decreaseTotalGo(1)
+			Self.decreaseCurrentGo(1)
 			return
 		case <-idleTimer.C:
 			Self.rwLock.Lock()
-			Self.totalGo--
+			Self.currentGo--
 			Self.timeoutGoGroup.remove(id)
 			Self.rwLock.Unlock()
 			return
 		case task, ok := <-Self.taskQueue:
 			if !ok {
 				// 任务队列已经关闭，减少 Goroutine 数量并退出
-				Self.decreaseTotalGo(1)
-				if Self.getTotalGo() == 0 {
+				Self.decreaseCurrentGo(1)
+				if Self.getCurrentGo() == 0 {
 					// 如果所有 Goroutine 都已完成，或者因调用Shutdown方法导致的协程退出
 					// 最后一个退出的协程负责状态迁移及显示通知外部调用者
 					if atomic.CompareAndSwapInt32(&Self.state, stateClosing, stateStopped) {
@@ -198,10 +197,10 @@ func (Self *OnDemandBlockTaskPool) goroutine(id int) {
 
 			Self.rwLock.Lock()
 			// 检查是否还有任务可以执行
-			noTask2Run := len(Self.taskQueue) == 0 || int32(len(Self.taskQueue)) < Self.totalGo
-			if noTask2Run && Self.coreGo < Self.totalGo && Self.totalGo <= Self.maxGo {
-				// 如果没有任务可以执行，并且 totalGo 超过了 coreGo数量，则减少 Goroutine 并退出
-				Self.totalGo--
+			noTask2Run := len(Self.taskQueue) == 0 || int32(len(Self.taskQueue)) < Self.currentGo
+			if noTask2Run && Self.coreGo < Self.currentGo && Self.currentGo <= Self.maxGo {
+				// 如果没有任务可以执行，并且 currentGo 超过了 coreGo数量，则减少 Goroutine 并退出
+				Self.currentGo--
 				Self.rwLock.Unlock()
 				return
 			}
@@ -211,8 +210,8 @@ func (Self *OnDemandBlockTaskPool) goroutine(id int) {
 			//    - 当前协程在超时退出前（最大空闲时间内）尝试拿任务，拿到则继续执行，没拿到则超时退出。
 			// 2. 如果当前协程属于(coreGo, maxGo]区间，且有任务可执行，也需要为其分配一个超时器兜底。
 			//    - 因为此时看队列中有任务，等真去拿的时候可能恰好没任务
-			//    - 这会导致当前协程总数（totalGo）长时间大于始协程数（initGo)直到队列再次有任务时才可能将当前总协程数准确地降至初始协程数
-			if Self.initGo < Self.totalGo-int32(Self.timeoutGoGroup.size()) {
+			//    - 这会导致当前协程总数（currentGo）长时间大于始协程数（initGo)直到队列再次有任务时才可能将当前总协程数准确地降至初始协程数
+			if Self.initGo < Self.currentGo-int32(Self.timeoutGoGroup.size()) {
 				idleTimer = time.NewTimer(defaultMaxIdleTime)
 				Self.timeoutGoGroup.add(id)
 			}
@@ -222,17 +221,17 @@ func (Self *OnDemandBlockTaskPool) goroutine(id int) {
 	} // end of for
 } // end of func
 
-// getTotalGo 用于查看TaskPool中有多少工作协程
-// 直接返回 Self.totalGo 可能会导致竞态条件（race condition），
-// 因为 Self.totalGo 可能在读取过程中被其他 goroutine 修改。
-// 通过使用局部变量 totalGo，可以确保在读取 Self.totalGo 后，
-// 即使其他 goroutine 修改了 Self.totalGo，也不会影响已经读取的值。
-func (Self *OnDemandBlockTaskPool) getTotalGo() int32 {
-	var totalGo int32
+// getCurrentGo 用于查看TaskPool中有多少工作协程
+// 直接返回 Self.currentGo 可能会导致竞态条件（race condition），
+// 因为 Self.currentGo 可能在读取过程中被其他 goroutine 修改。
+// 通过使用局部变量 currentGo，可以确保在读取 Self.currentGo 后，
+// 即使其他 goroutine 修改了 Self.currentGo，也不会影响已经读取的值。
+func (Self *OnDemandBlockTaskPool) getCurrentGo() int32 {
+	var currentGo int32
 	Self.rwLock.RLock()
-	totalGo = Self.totalGo
+	currentGo = Self.currentGo
 	Self.rwLock.RUnlock()
-	return totalGo
+	return currentGo
 }
 
 // Start 开始调度任务执行。
@@ -252,7 +251,7 @@ func (Self *OnDemandBlockTaskPool) Start() error {
 		if atomic.CompareAndSwapInt32(&Self.state, stateCreated, stateLocked) {
 			// 计算并启动需要的 goroutine 数量。
 			n := Self.numOfGoThatCanBeCreate()
-			Self.increaseTotalGo(n)
+			Self.increaseCurrentGo(n)
 
 			for i := int32(0); i < n; i++ {
 				go Self.goroutine(int(atomic.AddInt32(&Self.id, 1)))
@@ -346,9 +345,65 @@ func (Self *OnDemandBlockTaskPool) ShutdownNow() ([]Task, error) {
 	} // end of for
 }
 
+// States 返回一个通道，该通道定期发送任务池的状态。
+// interval 参数指定发送状态信息的时间间隔。
+// 如果上下文 ctx 被取消或任务池的上下文 interruptCtx 被取消，通道将关闭并返回。
 func (Self *OnDemandBlockTaskPool) States(ctx context.Context, interval time.Duration) (<-chan State, error) {
-	//TODO implement me
-	panic("implement me")
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+	if Self.interruptCtx.Err() != nil {
+		return nil, Self.interruptCtx.Err()
+	}
+
+	statesChan := make(chan State)
+	// 启动一个 goroutine 来定期发送任务池状态。
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			// 如果定时器触发，则发送当前时间戳的状态。
+			case timeStamp := <-ticker.C:
+				Self.sendState(statesChan, timeStamp.UnixNano())
+			case <-ctx.Done():
+				Self.sendState(statesChan, time.Now().UnixNano())
+				close(statesChan)
+				return
+			case <-Self.interruptCtx.Done():
+				Self.sendState(statesChan, time.Now().UnixNano())
+				close(statesChan)
+				return
+			}
+		} // end of for
+	}()
+
+	return statesChan, nil
+}
+
+// sendState 向提供的通道发送当前任务池的状态信息。
+// 如果通道能够接收状态，则通过非阻塞的方式发送；如果通道阻塞，则直接忽略，不进行重试，用户对自己的行为负责。
+func (Self *OnDemandBlockTaskPool) sendState(statesChan chan<- State, timeStamp int64) {
+	select {
+	case statesChan <- Self.getState(timeStamp):
+		// 状态发送成功。
+	default:
+		// 通道阻塞，忽略本次状态发送。
+	}
+}
+
+// getState 返回任务池的当前状态信息。
+// timeStamp 参数是状态生成的时间戳。
+func (Self *OnDemandBlockTaskPool) getState(timeStamp int64) State {
+	return State{
+		PoolState:      atomic.LoadInt32(&Self.state),
+		CurrentGo:      Self.currentGo,
+		QueueSize:      int32(cap(Self.taskQueue)),
+		WaitingTaskCnt: int32(len(Self.taskQueue)),
+		RunningTaskCnt: atomic.LoadInt32(&Self.numGoRunningTasks),
+		Timestamp:      timeStamp,
+	}
 }
 
 // NewOnDemandBlockTaskPool 创建一个新的 OnDemandBlockTaskPool
