@@ -29,8 +29,8 @@ type TaskPool interface {
 
 	// Shutdown 安全关闭任务池，停止接手新任务，等待已提交的任务执行完成。
 	// 如果任务池尚未启动，则立即返回。
-	// 返回一个 chan ShutdownSignal，当所有任务执行完毕时，会向该通道发送一个信号（空结构体）作为通知。
-	Shutdown() (<-chan ShutdownSignal, error)
+	// 返回一个 chan struct{}，当所有任务执行完毕时，会向该通道发送一个信号（空结构体）作为通知。
+	Shutdown() (<-chan struct{}, error)
 
 	// ShutdownNow 立即关闭任务池，尝试中断正在执行的任务，并返回所有未执行的任务列表。
 	// 能否中断任务取决于 TaskPool 和 Task 的具体实现。
@@ -48,9 +48,6 @@ type Task interface {
 	// ctx 提供了任务执行的上下文，可以实现超时控制。
 	Run(ctx context.Context) error
 }
-
-// ShutdownSignal 关闭任务池的信号
-type ShutdownSignal struct{}
 
 // State 定义了任务池的运行状态结构体
 type State struct {

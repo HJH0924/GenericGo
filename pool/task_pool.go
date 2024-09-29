@@ -290,9 +290,30 @@ func (Self *OnDemandBlockTaskPool) numOfGoThatCanBeCreate() int32 {
 	return n
 }
 
-func (Self *OnDemandBlockTaskPool) Shutdown() (<-chan ShutdownSignal, error) {
-	//TODO implement me
-	panic("implement me")
+// Shutdown 用于关闭任务池，拒绝新的任务提交，但会完成所有已提交的任务。
+// 当所有任务完成后，会往返回的 channel 发送信号（一个空结构体），并负责关闭该 channel。
+// 注意，此方法不会中断正在执行的任务。
+func (Self *OnDemandBlockTaskPool) Shutdown() (<-chan struct{}, error) {
+	for {
+		if atomic.LoadInt32(&Self.state) == stateCreated {
+			return nil, NewErrTaskPoolIsNotRunning
+		}
+		if atomic.LoadInt32(&Self.state) == stateStopped {
+			return nil, NewErrTaskPoolIsStopped
+		}
+		if atomic.LoadInt32(&Self.state) == stateClosing {
+			return nil, NewErrTaskPoolIsClosing
+		}
+
+		if atomic.CompareAndSwapInt32(&Self.state, stateRunning, stateClosing) {
+			// 关闭任务队列，表示不再接受新的任务。
+			// 这个操作会让所有goroutine在尝试从队列中获取任务时因通道关闭而退出。
+			close(Self.taskQueue)
+			// 返回一个channel，当所有任务执行完毕后，该channel会收到一个空结构体作为信号。
+			// 这里使用interruptCtx的Done()来获取channel，因为interruptCtx会在所有goroutine完成任务后取消。
+			return Self.interruptCtx.Done(), nil
+		}
+	} // end of for
 }
 
 func (Self *OnDemandBlockTaskPool) ShutdownNow() ([]Task, error) {
