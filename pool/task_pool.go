@@ -235,9 +235,59 @@ func (Self *OnDemandBlockTaskPool) getTotalGo() int32 {
 	return totalGo
 }
 
+// Start 开始调度任务执行。
+// 此方法将任务池状态设置为运行，并启动初始化数量的 goroutine 来处理任务。
 func (Self *OnDemandBlockTaskPool) Start() error {
-	//TODO implement me
-	panic("implement me")
+	for {
+		if atomic.LoadInt32(&Self.state) == stateClosing {
+			return NewErrTaskPoolIsClosing
+		}
+		if atomic.LoadInt32(&Self.state) == stateStopped {
+			return NewErrTaskPoolIsStopped
+		}
+		if atomic.LoadInt32(&Self.state) == stateRunning {
+			return NewErrTaskPoolIsStarted
+		}
+
+		if atomic.CompareAndSwapInt32(&Self.state, stateCreated, stateLocked) {
+			// 计算并启动需要的 goroutine 数量。
+			n := Self.numOfGoThatCanBeCreate()
+			Self.increaseTotalGo(n)
+
+			for i := int32(0); i < n; i++ {
+				go Self.goroutine(int(atomic.AddInt32(&Self.id, 1)))
+			}
+
+			// 修改任务池状态
+			atomic.StoreInt32(&Self.state, stateRunning)
+			return nil
+		}
+	} // end of for
+}
+
+// numOfGoThatCanBeCreate 返回在当前情况下可以创建的 goroutine 的数量。
+// 这个数量取决于任务队列中待处理任务的数量和任务池配置的 goroutine 数量限制。
+func (Self *OnDemandBlockTaskPool) numOfGoThatCanBeCreate() int32 {
+	// n 是当前需要创建的 goroutine 的数量，初始值为初始化 goroutine 数量。
+	n := Self.initGo
+	// allowGo 表示在初始化 goroutine 数量的基础上，还能创建多少个 goroutine。
+	allowGo := Self.maxGo - Self.initGo
+	// needGo 表示当前任务队列中待处理的任务数量与初始化 goroutine 数之间的差值。
+	needGo := int32(len(Self.taskQueue)) - Self.initGo
+
+	// 如果需要额外的 goroutine 来处理任务（即队列中的任务数超过了初始化 goroutine 数）。
+	if needGo > 0 {
+		// 如果额外需要的 goroutine 数量没有超过最大允许值，则创建所需数量的 goroutine。
+		if needGo <= allowGo {
+			n += needGo
+		} else {
+			// needGo > allowGo
+			// 如果额外需要的 goroutine 数量超过了最大允许值，则只创建最大允许的 goroutine 数量。
+			n += allowGo
+		}
+	}
+
+	return n
 }
 
 func (Self *OnDemandBlockTaskPool) Shutdown() (<-chan ShutdownSignal, error) {
