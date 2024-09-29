@@ -316,9 +316,34 @@ func (Self *OnDemandBlockTaskPool) Shutdown() (<-chan struct{}, error) {
 	} // end of for
 }
 
+// ShutdownNow 立即关闭任务池，并且返回所有剩余未执行的任务（不包含正在执行的任务）。
 func (Self *OnDemandBlockTaskPool) ShutdownNow() ([]Task, error) {
-	//TODO implement me
-	panic("implement me")
+	for {
+		if atomic.LoadInt32(&Self.state) == stateCreated {
+			return nil, NewErrTaskPoolIsNotRunning
+		}
+		if atomic.LoadInt32(&Self.state) == stateStopped {
+			return nil, NewErrTaskPoolIsStopped
+		}
+		if atomic.LoadInt32(&Self.state) == stateClosing {
+			return nil, NewErrTaskPoolIsClosing
+		}
+
+		if atomic.CompareAndSwapInt32(&Self.state, stateRunning, stateClosing) {
+			// 关闭任务队列，表示不再接受新的任务。
+			close(Self.taskQueue)
+
+			// 发送中断信号，中断所有工作协程的获取任务循环
+			Self.interruptCtxCancel()
+
+			// 清空任务队列，将未执行的任务返回
+			tasks := make([]Task, 0, len(Self.taskQueue))
+			for task := range Self.taskQueue {
+				tasks = append(tasks, task)
+			}
+			return tasks, nil
+		}
+	} // end of for
 }
 
 func (Self *OnDemandBlockTaskPool) States(ctx context.Context, interval time.Duration) (<-chan State, error) {
