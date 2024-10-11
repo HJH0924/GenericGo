@@ -62,8 +62,10 @@
    - [ ] 并发队列
    - [ ] 并发阻塞队列
    - [ ] 并发阻塞优先级队列
-- [ ] **利用 `GenericGo` 实现本地缓存**
-   - [ ] 适配 Redis
+- [ ] **统一缓存**
+   - [x] RedisCache
+   - [ ] LRUCache
+   - [ ] PriorityCache
 
 
 
