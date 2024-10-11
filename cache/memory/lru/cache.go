@@ -11,8 +11,9 @@ package lru
 
 import (
 	"context"
-	"github.com/HJH0924/GenericGo/cache"
 	"time"
+
+	"github.com/HJH0924/GenericGo/cache"
 )
 
 var (
