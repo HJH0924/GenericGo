@@ -12,8 +12,9 @@ package ratelimiter
 import (
 	"context"
 	_ "embed"
-	"github.com/redis/go-redis/v9"
 	"time"
+
+	"github.com/redis/go-redis/v9"
 )
 
 // RedisRateLimiter 基于 Redis 的限流器实现。
