@@ -66,6 +66,8 @@
    - [x] RedisCache
    - [ ] LRUCache
    - [ ] PriorityCache
+- [x] **限流器**
+  - [x] 基于 Redis + 滑动窗口 实现的限流器
 
 
 

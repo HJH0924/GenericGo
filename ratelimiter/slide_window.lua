@@ -12,27 +12,26 @@
 
 local key = KEYS[1]
 
-local interval = tonumber(ARGV[1])
+local window = tonumber(ARGV[1])
 local threshold = tonumber(ARGV[2])
 local now = tonumber(ARGV[3])
 
 -- 计算时间窗口的起始时间
-local min = now - interval
+local min = now - window
 
 -- 移除时间窗口之外的旧请求
 redis.call('ZREMRANGEBYSCORE', key, '-inf', min)
 
 -- 计算当前时间窗口中的请求数量
-local cnt = redis.call('ZCOUNT', key, '-inf', '+inf')
+local cnt = redis.call('ZCARD', key)
 
-if cnt >= threshold then
-    -- 请求数量超过阈值，触发限流
+-- 如果请求数量超过阈值，则触发限流
+if tonumber(cnt) >= threshold then
     return "true"
 else
-    -- 没有触发限流，将当前请求加入到有序集合中
-    -- ZADD key score member
+    -- 否则，将当前请求添加到有序集合中
     redis.call('ZADD', key, now, now)
-    -- 设置过期时间
-    redis.call('PEXPIRE', key, interval)
+    -- 设置有序集合的过期时间，以清除旧请求
+    redis.call('PEXPIRE', key, window)
     return "false"
 end
