@@ -26,3 +26,8 @@ tidy:
 check:
 	@$(MAKE) fmt
 	@$(MAKE) tidy
+
+.PHONY: mock
+mock:
+	@mockgen -source=./ratelimiter/types.go -package=mocks -destination=./ratelimiter/mocks/types.mock.go
+	@go mod tidy

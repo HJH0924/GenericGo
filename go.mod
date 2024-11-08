@@ -7,6 +7,7 @@ require (
 	github.com/redis/go-redis/v9 v9.6.1
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/atomic v1.11.0
+	go.uber.org/mock v0.5.0
 	go.uber.org/zap v1.27.0
 )
 
