@@ -30,4 +30,5 @@ check:
 .PHONY: mock
 mock:
 	@mockgen -source=./ratelimiter/types.go -package=mocks -destination=./ratelimiter/mocks/types.mock.go
+	@mockgen -package=redismocks -destination=./ratelimiter/redismocks/cmdable.mock.go github.com/redis/go-redis/v9 Cmdable
 	@go mod tidy
