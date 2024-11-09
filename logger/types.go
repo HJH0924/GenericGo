@@ -20,3 +20,10 @@ type Field struct {
 	Key string
 	Val any
 }
+
+func ErrorField(err error) Field {
+	return Field{
+		Key: "Error",
+		Val: err,
+	}
+}
